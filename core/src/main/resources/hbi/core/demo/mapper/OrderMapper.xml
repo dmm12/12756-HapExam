@@ -1,0 +1,61 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="hbi.core.demo.mapper.OrderMapper">
+    <resultMap id="orderBaseSelectMap" type="hbi.core.demo.dto.Custom">
+        <id column="INVENTORY_ITEM_ID" property="inventoryItemId"/>
+        <result column="HEADER_ID" property="headerId"/>
+        <result column="ORDER_NUMBER" property="orderNumber"/>
+        <result column="ORDER_STATUS" property="orderStatus"/>
+        <result column="ORDER_DATE" property="orderDate"/>
+        <result column="COMPANY_ID" property="companyId"/>
+        <result column="COMPANY_NAME" property="companyName"/>
+        <result column="CUSTOMER_ID" property="customerId"/>
+        <result column="CUSTOMER_NAME" property="customerName"/>
+        <result  column="LINE_ID" property="lineId"/>
+        <result  column="ORDERD_QUANTITY" property="orderdQuantity"/>
+        <result  column="UNIT_SELLING_PRICE" property="unitSellingPrice"/>
+        <result column="ITEM_CODE" property="itemCode"/>
+        <result column="ITEM_DESCRIPTION" property="itemDescription"/>
+        <result column="ITEM_UOM" property="itemUom"/>
+        <result column="ADDITION1" property="addition1"/>
+    </resultMap>
+
+    <select id="selectOrderList" resultMap="orderBaseSelectMap" parameterType="hbi.core.demo.dto.Custom">
+         SELECT h.HEADER_ID AS headerId,h.ORDER_NUMBER AS orderNumber,h.ORDER_STATUS AS orderStatus,
+        co.COMPANY_ID AS companyId,co.COMPANY_NAME AS companyName,c.CUSTOMER_ID,c.CUSTOMER_NAME AS customerName,
+        h.ORDER_DATE AS orderDate,
+        (SELECT sum(h1.ORDERD_QUANTITY*h1.UNIT_SELLING_PRICE)
+        from hap_om_order_lines h1
+        WHERE h1.HEADER_ID = h.HEADER_ID) AS sumPrice
+        from   HAP_OM_ORDER_HEADERS h,
+        HAP_OM_ORDER_LINES l ,
+        hap_org_companys co ,
+        HAP_AR_CUSTOMERS c
+        where h.COMPANY_ID = l.COMPANY_ID
+        and  h.COMPANY_ID = co.COMPANY_ID
+        and  h.COMPANY_ID  = c.COMPANY_ID
+
+        <if test="companyId != null" >
+            and co.COMPANY_ID = #{companyId}
+        </if>
+
+        <if test="customerId != null">
+            and c.CUSTOMER_ID = #{customerId}
+        </if>
+        <if test="inventoryItemId != null">
+            and l.INVENTORY_ITEM_ID = #{inventoryItemId}
+        </if>
+        <if test="orderStatus != null">
+            and h.ORDER_STATUS = #{orderStatus}
+        </if>
+        <if test="orderNumber != null">
+            and h.ORDER_NUMBER = #{orderNumber}
+        </if>
+        GROUP BY l.HEADER_ID;
+    </select>
+
+    <select id="selectByItems" resultMap="orderBaseSelectMap">
+       SELECT it.ITEM_CODE,it.ITEM_DESCRIPTION,it.ITEM_UOM,l.ORDERD_QUANTITY,l.UNIT_SELLING_PRICE,l.ADDITION1
+        from hap_inv_inventory_items it,HAP_OM_ORDER_LINES l
+        WHERE it.INVENTORY_ITEM_ID = l.INVENTORY_ITEM_ID;
+    </select>
+</mapper>

@@ -1,0 +1,21 @@
+body{
+	margin:0 auto;
+	width:1200px;
+}
+#body{
+	width: 400px;
+	height: 220px;
+	text-align: center;
+	margin:50px auto;
+	border:solid 1px #cccccc;
+}
+.body_top{
+	height: 45px;
+	background: #cccccc;
+}
+.body_top p{
+	line-height: 45px;
+}
+.body_content{
+	margin: 10px auto;
+}

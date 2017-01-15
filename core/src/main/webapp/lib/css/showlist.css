@@ -1,0 +1,25 @@
+.href {
+	text-align: center;
+}
+.body,#NewshowList{
+	width: 1200px;
+	text-align: center;
+	margin: 10px auto;
+}
+.body_top {
+	height: 30px;
+	color: #fea900;
+}
+.form_input {
+	width: 1200px;
+	margin: 0 auto;
+}
+#whoPage{
+	width:20px;
+}
+.fitem{
+	margin-top: 6px;
+}
+.nextnext{
+	list-style: none;
+}

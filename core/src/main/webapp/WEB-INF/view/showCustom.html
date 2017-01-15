@@ -1,0 +1,250 @@
+<#include "/include/header.html">
+    <body>
+    <script src="${base.contextPath}/common/code?orderstatus=DEMO.SELECTSTATUS" type="text/javascript"></script><!--订单状态,orderstatus是自己改的-->
+    <script>
+        var viewModel=kendo.observable({
+            model:{},
+            orderType: orderstatus,
+            createFunction: function(){  //新建
+                editData();
+            },
+            saveFunction: function(){//保存
+                $("#grid").data('kendoGrid').saveChanges();
+            },
+            cancelFunction: function(e){//取消
+                $("#grid").data('kendoGrid').cancelChanges();
+            },
+            queryFunction:function (e) { //关联绑定
+                $("#grid").data('kendoGrid').dataSource.page(1);
+            },
+            queryResource: function(e) {//把里面的东西绑定好
+                $("#grid").data('kendoGrid').dataSource.page(1);
+            }
+        });
+
+    </script>
+    <!--查询单-->
+    <p style="font-size: 18px">订单管理页面</p>
+    <hr>
+    <form class="form-showCustom" id="myCustom">
+        <div style="padding:15px 15px 0" id="query-form">
+            <div class="col-sm-12" >
+                <div style="height: 30px">
+
+                    <label class="col-sm-1 ">公司名称:</label>
+                    <div class="col-sm-3"><!--data-bind得到companyId的绑定数据名称-->
+                        <input id="dynamicLOV_company" data-bind="value:model.companyId" style="width: 100%"/>
+                    </div>
+
+                    <div class="customName" style="margin-left: 30px">
+                        <label class="col-sm-1 ">客户名称:</label>
+                        <div class="col-sm-2"><!--data-bind得到customName的绑定数据名称-->
+                            <input id="dynamicLOV_customerName" data-bind="value:model.customerId"  style="width: 100%"/>
+                        </div>
+                    </div>
+
+                    <div class="saleList">
+                        <label class="col-xs-1">销售订单号:</label>
+                        <div class="col-sm-3"><!--data-bind得到订单编号的绑定数据名称-->
+                            <input type="text"  id="saleText" data-role="maskedtextbox"  style="width:100%" data-bind="value:model.orderNumber"
+                            placeholder="如订单编号：120101">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12"  style="margin-left: 15px">
+            <label class="col-sm-1 control-label">物料:</label>
+            <div class="col-sm-2"><!--物料描述-->
+                <input id="dynamicLOV_wuliao" data-bind="value:model.inventoryItemId" />
+            </div>
+            <!--订单状态选择框框-->
+            <label class="col-sm-1 control-label">订单状态:</label>
+            <div class="col-sm-2">
+                <select data-role="combobox" data-value-primitive="true"
+                        id="selectOrderStatus"
+                        placeholder='<@spring.message "resource.type"/>' style="width:150px;"
+                        data-text-field="meaning" data-value-field="value"
+                        data-bind="source: orderType, value: model.orderStatus"></select>
+            </div>
+       </div>
+
+        <!--重置选择框-->
+        <div id="selectOption" style="margin-top: 40px;float: right">
+            <div class="text-right">
+                <span class="btn btn-primary"  data-bind="click:queryResource" type="submit">
+                    <@spring.message "hap.query"/></span>  <!--查询按钮-->
+                <span class="btn btn-default" type="button" data-bind="click:resetForm">
+                    <@spring.message "hap.reset"/></span>
+                <span class="btn btn-daochu" type="button" data-bind="click:exportTable">导出excel表</span>
+            </div>
+        </div>
+    </form>
+    </div>
+
+    <!--toolbar-->
+    <div id="page-content" >
+        <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;margin-top: 40px">
+            <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:createFunction"><@spring.message "hap.new"/></span>
+            <span class="btn btn-success k-grid-save-changes"   data-bind="click:saveFunction" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>
+            <span  class="btn btn-default k-grid-cancel-changes" data-bind="click:cancelFunction" style="float:left;" ><@spring.message "hap.cancel"/></span>
+        </div>
+    </div>
+    <!--绑定数据-->
+    <script>kendo.bind($('#toolbar-btn'), viewModel);</script>
+
+    <!--隐藏的框框，给弹出用的-->
+    <div id="dialog"></div>
+    <div id="assign-dialog"></div>
+    <!--s数据框-->
+    <div class="row">
+        <div class="col-xs-12" style="height:400px;clear:both">
+            <div id="grid" style=""></div>
+        </div>
+    </div>
+
+    <!--显示框-->
+    <script>
+            window.grid = $("#grid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read:{
+                            url: '${base.contextPath}/order/getOrderList',
+                            type: "POST",
+                            contentType: "application/json",
+                            dataType: "json",
+                            /*fail:function (data) {
+                                alert(data);
+                                kendo.ui.showWarningDialog({
+                                    message: '警告信息!'
+                                }).done(function (e) {
+                                    centered.show("没有查询项，请重新查询")
+                                });
+                            }*/
+                        },parameterMap: function (options, type) {
+                            if (type === "read") {
+                                return kendo.stringify(Hap.prepareQueryParameter(viewModel.model.toJSON(), options));
+                            }
+                        }
+                    },
+                    schema: {
+                        data: 'rows',
+                        total: 'total',
+                        model: {
+                            fields: {
+                                headerId: {type: "number"},
+                                companyId: {type: "number"},
+                                customerId: {type: "number"},
+                                inventoryItemId:{type:"number"}
+                            }
+                        }
+                    },
+                    pageSize: 10,
+                    serverPaging: true,
+                    //serverFiltering: true,
+                    serverSorting: true
+                },
+                height: 350,
+                filterable: true,
+                sortable: true,
+                pageable: true,
+               /* toolbar: [{
+                    name: "create",
+                    template: '<span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;" data-bind="click:createFunction"><@spring.message "hap.new"/></span>' //新建
+                }, {
+                    name: "save",
+                    template: '<span class="btn btn-success k-grid-save-changes"   data-bind="click:saveFunction" style="float:left;margin-right:5px;"><@spring.message "hap.save"/></span>' //保存
+                }, {
+                    name: "cancel",
+                    template: '<span  class="btn btn-default k-grid-cancel-changes" data-bind="click:cancelFunction" style="float:left;" ><@spring.message "hap.cancel"/></span>' //取消
+                }],*/
+                columns: [
+                    {
+                        field:"orderNumber",
+                        title:"订单编号",
+                        template: function(item){
+                            return '<a style="text-decoration: underline;" href="custom_edit.html?isedit=1'+item.headId+'">'+item.orderNumber + '</a>';
+                        }
+                    },
+                    {
+                        field:"companyName",
+                        title: "公司名称",
+                    },
+                    {
+                        field:"customerName",
+                        title: "客户名称"
+                    },
+                    {
+                        field:"orderDate",
+                        title: "订单日期",
+                        format: "{0:MM/dd/yyyy}"
+                    },
+                    {
+                        field: "orderStatus",
+                        title: "订单状态"
+                    },
+                    {
+                        field: "sumPrice",
+                        title: "总共金额"
+                    }
+                ]
+
+        }).data("kendoGrid");
+
+
+
+            $("#dynamicLOV_company").kendoLov({
+            code: "LOV_SELECTCOMPANY",
+            contextPath: '${base.contextPath}',
+            locale: '${base.locale}'
+        });
+
+            $("#dynamicLOV_customerName").kendoLov({
+            code: "LOV_SELECTCUSTOMNAME",
+            contextPath: '${base.contextPath}',
+            locale: '${base.locale}',
+            query: function(e) {
+                e.param['companyId'] = viewModel.model.companyId;
+            }
+        });
+
+       // kendo.bind($('#dynamicLOV_customerName'), viewModel);
+
+        $("#dynamicLOV_wuliao").kendoLov({  //选择物料
+            code: "LOV_SELECTITEMS",
+            contextPath: '${base.contextPath}',
+            locale: '${base.locale}'
+        });
+        kendo.bind($('#myCustom'),viewModel);
+        /*订单选择状态框*/
+//        $("#selectOrderStatus").kendoComboBox({
+//            dataSource: [
+//                {text: "已接收", value: "true"},
+//                {text: "未接收", value: "false"}],
+//            dataTextField: "text",
+//            dataValueField: "value",
+//            valuePrimitive: true
+//        });
+
+            window.editData = function(){
+                var url = 'custom_edit.html?isedit=1';
+                var dialog =  $("#dialog").kendoWindow({
+                    actions: [ "Maximize", "Minimize", "Close"],
+                    width: 900,
+                    height: 500,
+                    title: '<@spring.message "hap.edit"/>',
+                    content: url,
+                    iframe:  true,
+                    visible: false,
+                    modal:true,
+                    close: function() {
+                        //window 关闭  刷新 本页面的  grid
+                        $('#grid').data('kendoGrid').dataSource.page(1);
+                    }
+                }).data("kendoWindow");
+                dialog.center().open();
+            };
+            Hap.autoResizeGrid("#grid");
+    </script>
+
+    </body>
